@@ -1,1 +1,38 @@
-IyDlnJ/ogLPlhbbmlrnlnZcKCjnDlzkg5Yaw5Z2X5raI6Zmk5bCP5ri45oiP44CC5ouW5Yqo5Yaw5Z2X5aGr5ruh5LiA5pW06KGM5p2l5raI6Zmk77yM6aG25Yiw5qOL55uY6aG26YOo5bCx57uT5p2f44CCCgojIyDnjqnms5UKCi0gKirmi5bliqgqKu+8muaMieS9j+WGsOWdl+W3puWPs+aLluWKqO+8jOaVtOWIl+S8muacieWFieafseaPkOekuu+8jOadvuaJi+ehruiupOiQveeCuQotICoq6YeN5YqbKirvvJrmiYDmnInmgqznqbrlhrDlnZfpg73kvJrlvoDkuIvokL0KLSAqKuWbnuWQiCoq77ya5Yaw5Z2X5L2N572u5Y+R55Sf5Y+Y5YyW5omN566X5LiA5Liq5Zue5ZCI77yM5q+P5Zue5ZCI5bqV6YOo5Lya5Y2H6LW35paw55qE5Yaw5Z2XCi0gKirmtojpmaQqKu+8muWhq+a7oeS4gOaVtOihjOWNs+a2iOmZpO+8jOW+lyAxMDAwIOWIhi/ooYwKLSAqKui/nuWHuyoq77ya6L+e57ut5aSa5Liq5Zue5ZCI5raI6Zmk77yM5q+P6KGM57Sv6K6hIDEg6L+e5Ye777yMKzUwMC/ov57lh7sKLSAqKuWQiOa2iCoq77ya5Y2V5Liq5Zue5ZCI5YaF5raI6Zmk5aSa6KGM77yM5q+P6KGM57Sv6K6hIDEg5ZCI5raI77yMKzUwMC/lkIjmtogKLSAqKumBk+WFtyoq77ya5q+PIDEwIOWbnuWQiOmaj+acuuiOt+W+lyAxIOS4qu+8jOavj+enjeacgOWkmuWtmCAyIOS4qgogIC0g5riF5ZCM6Imy77ya5raI6Zmk5omA5pyJ5ZCM6Imy5Yaw5Z2XCiAgLSDngrnmnYDvvJrmsLjkuYXmtojpmaQgMSDkuKrlhrDlnZcKICAtIOenu+WKqO+8muaKiiAxIOS4quWGsOWdl+aLluWIsOS7u+aEj+epuuS9jQogIC0g5riF6KGM77ya5raI6Zmk5LiA5pW06KGMCi0gKirnibnmrorlhrDlnZcqKu+8mgogIC0g5Yaw5Ya777ya56ys5LiA5qyh6KKr5raI6Zmk5pe25Y+q6Kej5Ya777yM5YaN5raI6Zmk5LiA5qyh5omN5raI5aSxCiAgLSDol6TolJPvvJrooqvmtojpmaTml7bliIbop6PmiJAgMSDmoLzlsI/lhrDlnZcKCiMjIOi/kOihjAoK55u05o6l55So5rWP6KeI5Zmo5omT5byAIGBpbmRleC5odG1sYCDljbPlj6/vvIzkuI3pnIDopoHmnI3liqHlmajvvIzkuI3ogZTnvZHkuZ/og73njqnjgIIKCuS5n+WPr+S7peeUqCBHaXRIdWIgUGFnZXMg5omY566h77ya5LuT5bqT6K6+572u6YeM5omT5byAIFBhZ2Vz77yM6YCJ5oupIG1haW4g5YiG5pSv77yM5bCx6IO95b6X5Yiw5LiA5Liq5Zyo57q/5ri4546p5Zyw5Z2A44CCCgojIyDpmr7luqbmm7Lnur8KCuWJjeacn+Wuveadvu+8jDUwIOWbnuWQiOWQjuaWsOWGsOWdl+WPmOWvhuOAgeWPmOWuve+8jDEwMCDlm57lkIjlkI7lhrDlhrsv6Jek6JST5pu05aSa77yM6LaK5b6A5ZCO6LaK6Zq+44CCCgojIyDorrjlj6/or4EKCk1JVCBMaWNlbnNl77yM6K+m6KeBIFtMSUNFTlNFXShMSUNFTlNFKeOAggoKIyMg5aOw5piOCgrmnKzpobnnm67kuLrnsonkuJ3oh6rliLbnmoToh7TmlazlpI3liLvvvIznvo7mnK/kuI7ku6PnoIHlnYfkuLrljp/liJvvvIzkuI7ljp/muLjmiI/lrpjmlrnml6DlhbPjgIIK
+# 土耳其方块
+
+9×9 冰块消除小游戏。拖动冰块填满一整行来消除，顶到棋盘顶部就结束。
+
+## 玩法
+
+- **拖动**：按住冰块左右拖动，整列会有光柱提示，松手确认落点
+- **重力**：所有悬空冰块都会往下落
+- **回合**：冰块位置发生变化才算一个回合，每回合底部会升起新的冰块
+- **消除**：填满一整行即消除，得 1000 分/行
+- **连击**：连续多个回合消除，每行累计 1 连击，+500/连击
+- **合消**：单个回合内消除多行，每行累计 1 合消，+500/合消
+- **道具**：每 10 回合随机获得 1 个，每种最多存 2 个
+  - 清同色：消除所有同色冰块
+  - 点杀：永久消除 1 个冰块
+  - 移动：把 1 个冰块拖到任意空位
+  - 清行：消除一整行
+- **特殊冰块**：
+  - 冰冻：第一次被消除时只解冻，再消除一次才消失
+  - 藤蔓：被消除时分解成 1 格小冰块
+
+## 运行
+
+直接用浏览器打开 `index.html` 即可，不需要服务器，不联网也能玩。
+
+也可以用 GitHub Pages 托管：仓库设置里打开 Pages，选择 main 分支，就能得到一个在线游玩地址。
+
+## 难度曲线
+
+前期宽松，50 回合后新冰块变密、变宽，100 回合后冰冻/藤蔓更多，越往后越难。
+
+## 许可证
+
+MIT License，详见 [LICENSE](LICENSE)。
+
+## 声明
+
+本项目为粉丝自制的致敬复刻，美术与代码均为原创，与原游戏官方无关。
