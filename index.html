@@ -84,6 +84,22 @@
   #rewardBar span { color:#1c1c21; font-weight:700; }
   #props { display:flex; justify-content:space-around; align-items:flex-start; padding:6px 4px 2px; }
   .prop { display:flex; flex-direction:column; align-items:center; gap:5px; width:68px; }
+  /* Agent模式 */
+  .xiaojiBtn { font-size:12px; color:#1c1c21; background:#fff; border:1px solid #e2e2e8;
+    padding:6px 14px; border-radius:99px; margin:4px 2px; }
+  #xiaojiPanel { margin-top:8px; padding:10px; background:#fafafc; border:1px solid #e8e8ee;
+    border-radius:12px; display:flex; flex-direction:column; gap:8px; }
+  #moveInput { width:100%; font-size:12px; padding:8px; border:1px solid #e2e2e8;
+    border-radius:8px; resize:vertical; box-sizing:border-box; }
+  .xiaojiMsg { font-size:12px; color:#666; min-height:18px; }
+  .boardTitle { font-size:13px; font-weight:700; margin-top:4px; }
+  #leaderboard { font-size:12px; }
+  #leaderboard .lbRow { display:flex; gap:8px; padding:4px 0; border-bottom:1px solid #f0f0f4; }
+  #leaderboard .lbRow .nm { flex:1; }
+  #leaderboard .lbRow .ag { color:#8a8a93; font-size:11px; }
+  .reportRow { display:flex; gap:6px; align-items:center; }
+  #playerName { flex:1; font-size:12px; padding:6px 10px; border:1px solid #e2e2e8; border-radius:8px; }
+  .agentCheck { font-size:12px; white-space:nowrap; }
   .diamond { width:50px; height:50px; border-radius:14px; position:relative;
     background:#ffffff; border:1px solid #e2e2e8; box-shadow:0 1px 6px rgba(0,0,0,.05);
     display:flex; align-items:center; justify-content:center; transform:none; }
@@ -139,6 +155,20 @@
   <div id="hintbar"><span class="hint" id="hint"></span><button class="cancelT" id="cancelT">取消</button></div>
   <div id="rewardBar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px"><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V12M12 8v13M12 8S8 8 6.5 6.5A1.8 1.8 0 0 1 9.5 4C11 5.5 12 8 12 8zM12 8s4 0 5.5-1.5A1.8 1.8 0 0 0 14.5 4C13 5.5 12 8 12 8z"/></svg> <span id="rewardN">10</span> 回合后获得道具</div>
   <div id="props"></div>
+  <button id="xiaojiToggle" class="xiaojiBtn">小机端</button>
+  <div id="xiaojiPanel" style="display:none">
+    <div class="reportRow">
+      <span style="font-size:12px">我是</span>
+      <input id="playerName" placeholder="名字" maxlength="12" value="Zoey">
+      <label class="agentCheck"><input type="checkbox" id="isAgent"> 小机</label>
+    </div>
+    <button id="btnCopyState" class="xiaojiBtn">复制局面</button>
+    <textarea id="moveInput" placeholder="粘贴走法，如: move #2 to x=5" rows="3"></textarea>
+    <button id="btnExecMove" class="xiaojiBtn">执行走法</button>
+    <div id="xiaojiMsg" class="xiaojiMsg"></div>
+  </div>
+  <div class="boardTitle">排行榜</div>
+  <div id="leaderboard"></div>
   </div>
   </div>
 </div>
@@ -740,6 +770,7 @@ async function resolveClears() {
 function doGameOver() {
   gameOver = true;
   clearSave();
+  autoReport();
   beep(220, 0.4, 'sawtooth');
   const isRec = score > best;
   if (isRec) { best = score; saveBest(best); }
@@ -976,7 +1007,168 @@ document.getElementById('btnRestart').addEventListener('click', () => {
   newGame();
 });
 
+/* ===== v2.0 Agent模式 ===== */
+const COLOR_CN = ['红','蓝','绿','黄','紫','青','橙'];
+function colorName(c) { return COLOR_CN[c % COLOR_CN.length]; }
+function shapeName(b) {
+  const cells = b.cells || [{dx:0,dy:0}];
+  if (cells.length === 1) return '单格';
+  const ws = cells.map(c=>c.dx), hs = cells.map(c=>c.dy);
+  const w = Math.max(...ws)-Math.min(...ws)+1, h = Math.max(...hs)-Math.min(...hs)+1;
+  if (w===2&&h===2) return '2x2';
+  if (h===1) return '横'+w;
+  if (w===1) return '竖'+h;
+  return w+'x'+h;
+}
+function typeName(b) {
+  if (b.frozen) return '冰冻';
+  if (b.vine) return '藤蔓';
+  if (b.prop) return '道具('+b.prop+')';
+  return '普通';
+}
+function serializeState() {
+  const grid = Array.from({length: ROWS}, () => Array(COLS).fill('.'));
+  const cmap = {};
+  blocks.forEach(b => {
+    const ch = String(b.id % 10);
+    cmap[b.id] = ch;
+    (b.cells || [{dx:0,dy:0}]).forEach(c => {
+      const x = b.x + c.dx, y = b.y + c.dy;
+      if (x>=0&&x<COLS&&y>=0&&y<ROWS) grid[y][x] = ch;
+    });
+  });
+  let s = `土耳其方块 v2.0 | 回合:${round} 分数:${score} 连击:${combo}\n`;
+  s += `道具: 清同色x${props.compass} 点杀x${props.target} 移动x${props.triangle} 清行x${props.rowclear}\n`;
+  s += `棋盘(9x9, y=0底 y=8顶, .=空):\n`;
+  for (let y = ROWS-1; y >= 0; y--) s += `y${y}: ${grid[y].join('')}\n`;
+  s += `方块:\n`;
+  blocks.forEach(b => {
+    s += `#${b.id} ${shapeName(b)} @x${b.x}y${b.y} ${colorName(b.color)} ${typeName(b)}\n`;
+  });
+  return s;
+}
+function xiaojiMsg(t) { document.getElementById('xiaojiMsg').textContent = t; }
+async function execAgentMove(text) {
+  text = text.trim();
+  let m;
+  // move #N to x=X
+  if ((m = text.match(/move\s+#(\d+)\s+to\s+x=(\d+)/i))) {
+    const id = +m[1], tx = +m[2];
+    const b = blocks.find(v => v.id === id);
+    if (!b) return xiaojiMsg('找不到方块 #'+id);
+    const r = simulateDrop(id, tx);
+    if (!r) return xiaojiMsg('走法非法：放不下');
+    applySimResult(r.sim); syncDOM(); saveGame();
+    await sleep(220); busy = true; await endRound(); busy = false;
+    return xiaojiMsg('已执行: move #'+id+' to x='+tx);
+  }
+  // use 道具
+  if ((m = text.match(/use\s+(清同色|点杀|移动|清行)\s*(.*)/))) {
+    const pn = m[1], rest = m[2].trim();
+    return xiaojiMsg('道具走法暂需手动操作: '+pn);
+  }
+  return xiaojiMsg('看不懂走法，格式: move #2 to x=5');
+}
+// 记分板
+function loadBoard() {
+  try {
+    if (window.hatchWidget) return window.hatchWidget.getState({board:[]}).board || [];
+    if (_ls) { const v = _ls.getItem('turkeySlideBoard'); return v ? JSON.parse(v) : []; }
+  } catch(e) {}
+  return [];
+}
+function saveBoard(bd) {
+  try {
+    if (window.hatchWidget) window.hatchWidget.setState({board: bd});
+    if (_ls) _ls.setItem('turkeySlideBoard', JSON.stringify(bd));
+  } catch(e) {}
+}
+function renderBoard() {
+  const bd = loadBoard().sort((a,b) => b.score - a.score).slice(0, 20);
+  const el = document.getElementById('leaderboard');
+  if (!bd.length) { el.innerHTML = '<div style="color:#aaa">暂无成绩</div>'; return; }
+  el.innerHTML = bd.map((r,i) =>
+    `<div class="lbRow"><span>${i+1}.</span><span class="nm">${r.name}</span>`+
+    `<span class="ag">${r.agent?'Agent':'人'}</span><span>${r.score}</span><span>${r.rounds}回</span></div>`
+  ).join('');
+}
+document.getElementById('xiaojiToggle').addEventListener('click', () => {
+  const p = document.getElementById('xiaojiPanel');
+  p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+  if (p.style.display !== 'none') renderBoard();
+});
+document.getElementById('btnCopyState').addEventListener('click', async () => {
+  const t = serializeState();
+  try { await navigator.clipboard.writeText(t); xiaojiMsg('局面已复制'); }
+  catch(e) {
+    const ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); xiaojiMsg('局面已复制'); }
+    catch(e2) { xiaojiMsg('复制失败，请手动复制'); }
+    ta.remove();
+  }
+});
+document.getElementById('btnExecMove').addEventListener('click', () => {
+  const t = document.getElementById('moveInput').value;
+  if (!t.trim()) return xiaojiMsg('请先粘贴走法');
+  if (busy) return xiaojiMsg('忙碌中，稍等');
+  execAgentMove(t);
+});
+/* 结束自动上榜 */
+function autoReport() {
+  const nameEl = document.getElementById('playerName');
+  const agentEl = document.getElementById('isAgent');
+  const name = (nameEl && nameEl.value.trim()) || '无名';
+  const agent = agentEl && agentEl.checked;
+  const bd = loadBoard();
+  bd.push({name, score, rounds: round, agent: !!agent, t: Date.now()});
+  saveBoard(bd); renderBoard();
+}
+
+
+
+/* 给Agent直接调用的JS接口（小机操纵页面用） */
+window.TurkeySlide = {
+  // 获取结构化局面
+  getState() {
+    return {
+      round, score, combo,
+      props: {compass: props.compass, target: props.target, triangle: props.triangle, rowclear: props.rowclear},
+      blocks: blocks.map(b => ({
+        id: b.id, x: b.x, y: b.y,
+        cells: (b.cells||[{dx:0,dy:0}]).map(c=>({dx:c.dx,dy:c.dy})),
+        color: colorName(b.color), type: typeName(b)
+      }))
+    };
+  },
+  // 获取文本局面（同复制按钮）
+  getText() { return serializeState(); },
+  // 执行走法，返回Promise<boolean>
+  async doMove(id, x) {
+    if (busy) return false;
+    const b = blocks.find(v => v.id === id);
+    if (!b) return false;
+    const r = simulateDrop(id, x);
+    if (!r) return false;
+    applySimResult(r.sim); syncDOM(); saveGame();
+    await sleep(220); busy = true; await endRound(); busy = false;
+    return true;
+  },
+  // 上报成绩
+  report(name, isAgent) {
+    const bd = loadBoard();
+    bd.push({name: name||'无名', score, rounds: round, agent: !!isAgent, t: Date.now()});
+    saveBoard(bd); renderBoard();
+    return true;
+  },
+  // 获取记分板
+  getBoard() { return loadBoard().sort((a,b)=>b.score-a.score); },
+  // 是否结束
+  isOver() { return gameOver; }
+};
+
 buildProps();
+renderBoard();
 const _hadSave = loadGame();
 if (!_hadSave) newGame(false);
 else { started = true; fitBoard(); }
